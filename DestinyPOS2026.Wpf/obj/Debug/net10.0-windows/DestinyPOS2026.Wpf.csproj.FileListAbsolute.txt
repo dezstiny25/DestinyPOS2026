@@ -1,0 +1,9 @@
+C:\Users\PC Users\DestinyPOS2026\DestinyPOS2026.Wpf\obj\Debug\net10.0-windows\Views\DashboardView.baml
+C:\Users\PC Users\DestinyPOS2026\DestinyPOS2026.Wpf\obj\Debug\net10.0-windows\Views\MainWindow.g.cs
+C:\Users\PC Users\DestinyPOS2026\DestinyPOS2026.Wpf\obj\Debug\net10.0-windows\App.g.cs
+C:\Users\PC Users\DestinyPOS2026\DestinyPOS2026.Wpf\obj\Debug\net10.0-windows\GeneratedInternalTypeHelper.g.cs
+C:\Users\PC Users\DestinyPOS2026\DestinyPOS2026.Wpf\obj\Debug\net10.0-windows\DestinyPOS2026.Wpf_MarkupCompile.cache
+C:\Users\PC Users\DestinyPOS2026\DestinyPOS2026.Wpf\obj\Debug\net10.0-windows\DestinyPOS2026.Wpf_MarkupCompile.lref
+C:\Users\PC Users\DestinyPOS2026\DestinyPOS2026.Wpf\obj\Debug\net10.0-windows\DestinyPOS2026.Wpf.dll
+C:\Users\PC Users\DestinyPOS2026\DestinyPOS2026.Wpf\obj\Debug\net10.0-windows\refint\DestinyPOS2026.Wpf.dll
+C:\Users\PC Users\DestinyPOS2026\DestinyPOS2026.Wpf\obj\Debug\net10.0-windows\DestinyPOS2026.Wpf.pdb

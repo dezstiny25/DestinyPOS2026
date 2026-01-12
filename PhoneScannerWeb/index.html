@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>DestinyPOS Mobile Scanner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin: 0;
+        padding: 10px;
+        background: #f5f5f5;
+      }
+      #scanner {
+        width: 100%;
+        max-width: 400px;
+        margin: 20px auto;
+      }
+      #barcodeInput {
+        font-size: 16px;
+        width: 80%;
+        padding: 5px;
+      }
+      #sendBtn {
+        font-size: 16px;
+        padding: 5px 10px;
+        margin-top: 5px;
+      }
+      h2 {
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>DestinyPOS Mobile Scanner</h2>
+
+    <div id="scanner"></div>
+    <input type="text" id="barcodeInput" placeholder="Scan barcode manually" />
+    <button id="sendBtn">Send to POS</button>
+
+    <!-- html5-qrcode CDN -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script>
+      // Extract token from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get("token");
+
+      if (!token) {
+        alert(
+          "No token provided! Make sure you scan the correct QR code from POS."
+        );
+      }
+
+      // Connect to WebSocket server
+      const hostIp = window.location.hostname;
+      const wsUrl = `ws://${hostIp}:5000/ws/?token=${token}`;
+      const socket = new WebSocket(wsUrl);
+
+      socket.onopen = () => console.log("Connected to POS WebSocket");
+      socket.onclose = () => console.log("Disconnected from POS");
+
+      function sendBarcode(barcode) {
+        if (barcode && socket.readyState === WebSocket.OPEN) {
+          socket.send(barcode);
+          console.log("Sent barcode:", barcode);
+        }
+      }
+
+      // Send button for manual input
+      document.getElementById("sendBtn").addEventListener("click", () => {
+        const barcode = document.getElementById("barcodeInput").value;
+        sendBarcode(barcode);
+        document.getElementById("barcodeInput").value = "";
+      });
+
+      // Initialize camera barcode scanner
+      const html5QrCode = new Html5Qrcode("scanner");
+
+      const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+        // Send automatically to POS
+        sendBarcode(decodedText);
+      };
+
+      const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+      Html5Qrcode.getCameras()
+        .then((cameras) => {
+          if (cameras && cameras.length) {
+            // Prefer back camera if available
+            const cameraId = cameras[0].id;
+            html5QrCode.start(cameraId, config, qrCodeSuccessCallback);
+          } else {
+            alert("No camera found on this device.");
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          alert("Camera access denied or not available.");
+        });
+    </script>
+  </body>
+</html>
