@@ -1,0 +1,80 @@
+<UserControl x:Class="DestinyPOS2026.Wpf.Views.SearchItemsControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Width="350" Height="Auto">
+
+    <StackPanel Margin="0,0,0,5">
+        <!-- Search TextBox with Placeholder -->
+        <Grid>
+            <TextBox Name="SearchTextBox"
+                     Height="35"
+                     Padding="10"
+                     FontSize="12"
+                     Background="White"
+                     BorderThickness="1"
+                     BorderBrush="#CCCCCC"
+                     TextChanged="SearchTextBox_TextChanged"
+                     KeyDown="SearchTextBox_KeyDown"
+                     ToolTip="Type to search by barcode or product name" />
+            
+            <!-- Placeholder text -->
+            <TextBlock IsHitTestVisible="False"
+                       Text="Search by barcode or name..."
+                       Foreground="#999999"
+                       Margin="15,0,0,0"
+                       VerticalAlignment="Center"
+                       FontSize="12"
+                       Name="PlaceholderText" />
+        </Grid>
+
+        <!-- Auto-suggest Dropdown -->
+        <Border Margin="0,5,0,0" 
+                BorderThickness="1" 
+                BorderBrush="#CCCCCC"
+                Background="White"
+                Name="DropdownBorder"
+                Visibility="Collapsed">
+            
+            <ListBox Name="ResultsListBox"
+                     MaxHeight="200"
+                     BorderThickness="0"
+                     Background="White"
+                     SelectionChanged="ResultsListBox_SelectionChanged"
+                     MouseDoubleClick="ResultsListBox_MouseDoubleClick"
+                     ItemsSource="{Binding FilteredResults, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border Padding="10,8" BorderThickness="0,0,0,1" BorderBrush="#EEEEEE">
+                            <StackPanel>
+                                <TextBlock FontWeight="Bold" Text="{Binding ProductName}" Foreground="#333333" />
+                                <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                                    <TextBlock Text="{Binding Barcode}" 
+                                               Foreground="#666666" 
+                                               FontSize="10"
+                                               Margin="0,0,10,0" />
+                                    <TextBlock Text="{Binding UnitPrice, StringFormat=₱{0:N2}}" 
+                                               Foreground="#2196F3"
+                                               FontSize="10"
+                                               FontWeight="Bold" />
+                                    <TextBlock Text="{Binding CurrentStock, StringFormat=Stock: {0}}" 
+                                               Foreground="#FF9800"
+                                               FontSize="10"
+                                               Margin="10,0,0,0" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+
+        <!-- No Results Message -->
+        <TextBlock Name="NoResultsText"
+                   Margin="0,5,0,0"
+                   Foreground="#F44336"
+                   Text="No items found"
+                   Visibility="Collapsed"
+                   FontSize="11" />
+    </StackPanel>
+</UserControl>

@@ -1,0 +1,72 @@
+<Window x:Class="DestinyPOS2026.Wpf.Views.AddServiceWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Add Service" Height="280" Width="400"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        Background="#F5F5F5">
+
+    <Grid Margin="20">
+        <StackPanel VerticalAlignment="Stretch">
+            
+            <!-- Service Name Input -->
+            <TextBlock Text="Service Name" FontWeight="Bold" Margin="0,0,0,5" />
+            <TextBox Name="ServiceNameTextBox" 
+                     Height="35" 
+                     Padding="10"
+                     Margin="0,0,0,15"
+                     FontSize="12"
+                     Background="White"
+                     BorderThickness="1"
+                     BorderBrush="#CCCCCC" />
+
+            <!-- Labor/Price Input -->
+            <TextBlock Text="Labor Cost / Price (₱)" FontWeight="Bold" Margin="0,0,0,5" />
+            <TextBox Name="LaborPriceTextBox" 
+                     Height="35" 
+                     Padding="10"
+                     Margin="0,0,0,15"
+                     FontSize="12"
+                     Background="White"
+                     BorderThickness="1"
+                     BorderBrush="#CCCCCC" />
+
+            <!-- Notes Input -->
+            <TextBlock Text="Notes (Optional)" FontWeight="Bold" Margin="0,0,0,5" />
+            <TextBox Name="NotesTextBox" 
+                     Height="70" 
+                     Padding="10"
+                     Margin="0,0,0,20"
+                     FontSize="12"
+                     TextWrapping="Wrap"
+                     AcceptsReturn="True"
+                     VerticalScrollBarVisibility="Auto"
+                     Background="White"
+                     BorderThickness="1"
+                     BorderBrush="#CCCCCC" />
+
+            <!-- Button Row -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                <Button Name="SaveButton" 
+                        Content="Save Service" 
+                        Width="120" 
+                        Height="35"
+                        Margin="0,0,10,0"
+                        Background="#4CAF50"
+                        Foreground="White"
+                        FontWeight="Bold"
+                        Click="SaveButton_Click" />
+                
+                <Button Name="CancelButton" 
+                        Content="Cancel" 
+                        Width="100" 
+                        Height="35"
+                        Background="#F44336"
+                        Foreground="White"
+                        FontWeight="Bold"
+                        Click="CancelButton_Click" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

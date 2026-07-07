@@ -1,5 +1,6 @@
 using DestinyPOS2026.Wpf.Helpers;
 using DestinyPOS2026.Wpf.Models;
+using DestinyPOS2026.Wpf.Views;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -9,13 +10,18 @@ using System.Windows.Media.Imaging;
 
 namespace DestinyPOS2026.Wpf.ViewModels;
 
+/// <summary>
+/// Enhanced sale item that supports both products and services
+/// </summary>
 public class SaleItem
 {
-    public int ProductId { get; set; }
+    public string Barcode { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
+    public string ItemType { get; set; } = "Product"; // "Product" or "Service"
     public int Quantity { get; set; }
     public decimal Price { get; set; }
     public decimal Total => Price * Quantity;
+    public string Notes { get; set; } = string.Empty; // For service details
 }
 
 public class PosViewModel : BaseViewModel
@@ -40,10 +46,12 @@ public class PosViewModel : BaseViewModel
 
     public decimal Total => Subtotal - Discount;
 
+    // Commands
     public RelayCommand AddItemCommand { get; }
+    public RelayCommand AddServiceCommand { get; }
     public RelayCommand PayCashCommand { get; }
-    public RelayCommand PayGcashCommand { get; }
-    public RelayCommand PayCardCommand { get; }
+    public RelayCommand RemoveItemCommand { get; }
+    public RelayCommand ClearAllCommand { get; }
 
     public BitmapImage QrCodeImage { get; }
 
@@ -52,10 +60,14 @@ public class PosViewModel : BaseViewModel
     public PosViewModel()
     {
         AddItemCommand = new RelayCommand(_ => AddItem());
+        AddServiceCommand = new RelayCommand(_ => AddService());
         PayCashCommand = new RelayCommand(_ => CompleteSale("CASH"));
-        PayGcashCommand = new RelayCommand(_ => CompleteSale("GCASH"));
-        PayCardCommand = new RelayCommand(_ => CompleteSale("CARD"));
+        RemoveItemCommand = new RelayCommand(obj => RemoveItem(obj));
+        ClearAllCommand = new RelayCommand(_ => ClearAll());
 
+        // Initialize inventory and sales logging systems
+        InventoryHelper.InitializeInventoryFile();
+        SalesReportHelper.InitializeSalesReportFile();
         DatabaseHelper.InitializeDatabase();
 
         // Subscribe to barcodes from pairing server
@@ -69,14 +81,82 @@ public class PosViewModel : BaseViewModel
     {
         if (string.IsNullOrWhiteSpace(BarcodeInput)) return;
 
-        var product = DatabaseHelper.GetProductByBarcode(BarcodeInput.Trim());
-        if (product == null)
+        var barcode = BarcodeInput.Trim();
+
+        // Try to find as inventory item first
+        var inventoryItem = InventoryHelper.GetInventoryItemByBarcode(barcode);
+        if (inventoryItem != null)
         {
-            MessageBox.Show($"Product with barcode {BarcodeInput} not found.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+            AddInventoryItem(inventoryItem);
             return;
         }
 
-        var existing = SaleItems.FirstOrDefault(x => x.ProductId == product.Id);
+        // Fallback to database for backward compatibility
+        var product = DatabaseHelper.GetProductByBarcode(barcode);
+        if (product != null)
+        {
+            AddProductFromDatabase(product);
+            return;
+        }
+
+        MessageBox.Show($"Product with barcode {barcode} not found.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+    }
+
+    /// <summary>
+    /// Handles item selected from search control
+    /// Called when user selects an item from the search dropdown
+    /// </summary>
+    public void OnItemSelected(InventoryItem inventoryItem)
+    {
+        AddInventoryItem(inventoryItem);
+    }
+
+    private void AddInventoryItem(InventoryItem inventoryItem)
+    {
+        // Check for low stock alert
+        if (inventoryItem.CurrentStock <= inventoryItem.ReorderLevel)
+        {
+            MessageBox.Show(
+                $"Low stock alert: {inventoryItem.ProductName}\nCurrent: {inventoryItem.CurrentStock}, Reorder Level: {inventoryItem.ReorderLevel}",
+                "Stock Alert",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+
+        var existing = SaleItems.FirstOrDefault(x => x.Barcode == inventoryItem.Barcode && x.ItemType == "Product");
+        if (existing != null)
+        {
+            if (existing.Quantity + 1 > inventoryItem.CurrentStock)
+            {
+                MessageBox.Show("Insufficient stock.", "Stock Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            existing.Quantity++;
+        }
+        else
+        {
+            if (inventoryItem.CurrentStock <= 0)
+            {
+                MessageBox.Show("Product out of stock.", "Stock Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            SaleItems.Add(new SaleItem
+            {
+                Barcode = inventoryItem.Barcode,
+                Name = inventoryItem.ProductName,
+                ItemType = "Product",
+                Quantity = 1,
+                Price = inventoryItem.UnitPrice
+            });
+        }
+
+        BarcodeInput = string.Empty;
+        RefreshTotals();
+    }
+
+    private void AddProductFromDatabase(Product product)
+    {
+        var existing = SaleItems.FirstOrDefault(x => x.Barcode == product.Barcode && x.ItemType == "Product");
         if (existing != null)
         {
             if (existing.Quantity + 1 > product.Stock)
@@ -95,8 +175,9 @@ public class PosViewModel : BaseViewModel
             }
             SaleItems.Add(new SaleItem
             {
-                ProductId = product.Id,
+                Barcode = product.Barcode,
                 Name = product.Name,
+                ItemType = "Product",
                 Quantity = 1,
                 Price = product.Price
             });
@@ -106,6 +187,115 @@ public class PosViewModel : BaseViewModel
         RefreshTotals();
     }
 
+    /// <summary>
+    /// Opens the Add Service modal window
+    /// Allows user to enter service name, labor cost, and notes
+    /// </summary>
+    public void AddService()
+    {
+        var serviceWindow = new AddServiceWindow();
+        
+        // Show as modal dialog
+        if (serviceWindow.ShowDialog() == true)
+        {
+            // User clicked Save
+            string serviceName = serviceWindow.ServiceName;
+            decimal laborCost = serviceWindow.LaborPrice;
+            string notes = serviceWindow.Notes;
+
+            // Add service to sale items
+            var serviceItem = new SaleItem
+            {
+                Barcode = $"SERVICE-{Guid.NewGuid():N}".Substring(0, 20), // Unique service barcode
+                Name = serviceName,
+                ItemType = "Service",
+                Quantity = 1,
+                Price = laborCost,
+                Notes = notes
+            };
+
+            SaleItems.Add(serviceItem);
+            RefreshTotals();
+        }
+    }
+
+    /// <summary>
+    /// Adds a printing service to the sale
+    /// </summary>
+    public void AddPrintingService(string paperSize, string printType, int quantity)
+    {
+        var printingOption = PricingHelper.CalculatePrintingPrice(paperSize, printType, quantity);
+        var description = $"Printing: {printingOption}";
+
+        SaleItems.Add(new SaleItem
+        {
+            Barcode = $"PRINT-{paperSize}-{printType}",
+            Name = description,
+            ItemType = "Service",
+            Quantity = quantity,
+            Price = printingOption.PricePerUnit,
+            Notes = $"Paper Size: {paperSize}, Type: {printType}"
+        });
+
+        RefreshTotals();
+    }
+
+    /// <summary>
+    /// Adds a repair service to the sale
+    /// </summary>
+    public void AddRepairService(string repairType, int laborMinutes, decimal complexityFactor, decimal laborCost)
+    {
+        var description = $"{repairType}: {laborMinutes} minutes";
+
+        SaleItems.Add(new SaleItem
+        {
+            Barcode = $"REPAIR-{repairType}",
+            Name = description,
+            ItemType = "Service",
+            Quantity = 1,
+            Price = laborCost,
+            Notes = $"Type: {repairType}, Minutes: {laborMinutes}, Complexity: {complexityFactor}x"
+        });
+
+        RefreshTotals();
+    }
+
+    /// <summary>
+    /// Removes a single item from the sale
+    /// </summary>
+    private void RemoveItem(object obj)
+    {
+        if (obj is SaleItem item)
+        {
+            SaleItems.Remove(item);
+            RefreshTotals();
+        }
+    }
+
+    /// <summary>
+    /// Clears all items from the current transaction
+    /// </summary>
+    private void ClearAll()
+    {
+        var result = MessageBox.Show(
+            "Clear all items from this transaction?",
+            "Confirm Clear",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (result == MessageBoxResult.Yes)
+        {
+            SaleItems.Clear();
+            Discount = 0;
+            RefreshTotals();
+        }
+    }
+
+    /// <summary>
+    /// Completes the sale and logs all transactions
+    /// Uses Cash payment method (simplified as per requirements)
+    /// Logs transactions to monthly files with daily sheet organization
+    /// </summary>
     private void CompleteSale(string method)
     {
         if (!SaleItems.Any())
@@ -114,11 +304,46 @@ public class PosViewModel : BaseViewModel
             return;
         }
 
-        // Deduct stock
-        foreach (var item in SaleItems)
-            DatabaseHelper.DeductProductStock(item.ProductId, item.Quantity);
+        var transactions = new System.Collections.Generic.List<Transaction>();
 
-        // Log sale
+        // Process each sale item
+        foreach (var item in SaleItems)
+        {
+            if (item.ItemType == "Product")
+            {
+                // Deduct stock from inventory
+                if (!InventoryHelper.DeductStock(item.Barcode, item.Quantity))
+                {
+                    // Fallback to database if not in inventory
+                    var product = DatabaseHelper.GetProductByBarcode(item.Barcode);
+                    if (product != null)
+                    {
+                        DatabaseHelper.DeductProductStock(product.Id, item.Quantity);
+                    }
+                }
+            }
+
+            // Create transaction for logging
+            transactions.Add(new Transaction
+            {
+                Timestamp = DateTime.Now,
+                TransactionType = item.ItemType,
+                Description = item.Name,
+                Quantity = item.Quantity,
+                UnitPrice = item.Price,
+                TotalPrice = item.Total,
+                PaymentMethod = method,
+                Notes = item.Notes
+            });
+        }
+
+        // Log all transactions to monthly file with daily sheet organization
+        SalesReportHelper.LogTransactionsMonthly(transactions);
+
+        // Also log to legacy SalesReport.xlsx and database for backward compatibility
+        SalesReportHelper.LogTransactions(transactions);
+
+        // Also log to database for backward compatibility
         var sale = new SaleRecord
         {
             Date = DateTime.Now,

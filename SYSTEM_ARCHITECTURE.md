@@ -1,0 +1,395 @@
+# Destiny POS 2026 - System Architecture Diagram
+
+## High-Level System Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           User Interface Layer (WPF)                       │
+│                                                                             │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐         │
+│  │   POS Checkout   │  │ Printing Service │  │  Repair Service  │         │
+│  │     Dialog       │  │     Dialog       │  │     Dialog       │         │
+│  └────────┬─────────┘  └────────┬─────────┘  └────────┬─────────┘         │
+│           │                     │                     │                   │
+│           └─────────────────────┼─────────────────────┘                   │
+│                                 │                                          │
+└─────────────────────────────────┼──────────────────────────────────────────┘
+                                  │
+                    ┌─────────────▼──────────────┐
+                    │   PosViewModel            │
+                    │ (Enhanced with Services)  │
+                    └─────────────┬──────────────┘
+                                  │
+                ┌─────────────────┼─────────────────┐
+                │                 │                 │
+        ┌───────▼────────┐  ┌──────▼──────┐  ┌─────▼──────────┐
+        │ Inventory      │  │   Pricing   │  │   Sales Report │
+        │ Helper         │  │   Helper    │  │   Helper       │
+        └────────┬───────┘  └─────────────┘  └────────┬───────┘
+                 │                                     │
+        ┌────────▼──────────────────────────────────────▼────────┐
+        │  Data Persistence Layer                               │
+        │                                                        │
+        │  ┌──────────────────────┐   ┌────────────────────┐   │
+        │  │  Inventory.xlsx      │   │ SalesReport.xlsx   │   │
+        │  │                      │   │                    │   │
+        │  │ • Barcode            │   │ • Timestamp        │   │
+        │  │ • ProductName        │   │ • TransactionType  │   │
+        │  │ • UnitPrice          │   │ • Description      │   │
+        │  │ • CurrentStock       │   │ • Quantity         │   │
+        │  │ • ReorderLevel       │   │ • UnitPrice        │   │
+        │  │ • Category           │   │ • TotalPrice       │   │
+        │  │ • Supplier           │   │ • PaymentMethod    │   │
+        │  └──────────────────────┘   └────────────────────┘   │
+        │                                                        │
+        │  ┌──────────────────────┐                            │
+        │  │  destinypos.db       │ (Legacy Compatibility)     │
+        │  │  • Products          │                            │
+        │  │  • Sales             │                            │
+        │  └──────────────────────┘                            │
+        └────────────────────────────────────────────────────────┘
+```
+
+## Data Model Relationships
+
+```
+                    ┌─────────────────────┐
+                    │   SaleItem          │
+                    │ (In Memory)         │
+                    ├─────────────────────┤
+                    │ • Barcode           │
+                    │ • Name              │
+                    │ • ItemType          │
+                    │ • Quantity          │
+                    │ • Price             │
+                    │ • Total             │
+                    │ • Notes             │
+                    └────────────┬────────┘
+                                 │
+                    ┌────────────┴────────────┐
+                    │                        │
+        ┌───────────▼──────────┐   ┌────────▼──────────┐
+        │  InventoryItem       │   │  Service          │
+        │  (From Excel)        │   │  (Definition)     │
+        ├──────────────────────┤   ├───────────────────┤
+        │ • Barcode            │   │ • Id              │
+        │ • ProductName        │   │ • Name            │
+        │ • Category           │   │ • Category        │
+        │ • UnitPrice          │   │ • Description     │
+        │ • CurrentStock       │   │ • BasePrice       │
+        │ • ReorderLevel       │   │ • AllowCustom     │
+        │ • ReorderQty         │   │   Price           │
+        │ • Supplier           │   └───────────────────┘
+        │ • LastRestocked      │
+        └──────────────────────┘
+
+                         │
+                         │ (When sold)
+                         ▼
+
+        ┌──────────────────────────┐
+        │  Transaction             │
+        │  (Logged to Excel)       │
+        ├──────────────────────────┤
+        │ • Timestamp              │
+        │ • TransactionType        │
+        │ • Description            │
+        │ • Quantity               │
+        │ • UnitPrice              │
+        │ • TotalPrice             │
+        │ • PaymentMethod          │
+        │ • Notes                  │
+        └──────────────────────────┘
+```
+
+## Pricing Matrix
+
+### Printing Services
+
+```
+                    Paper Size
+            ┌───────────┬─────────┬─────────┐
+            │ Letter    │   A4    │ Legal   │
+        ┌───┼───────────┼─────────┼─────────┤
+        │BW │   ₱0.50   │ ₱0.50   │ ₱0.75   │
+Print   ├───┼───────────┼─────────┼─────────┤
+Type    │Col│   ₱1.00   │ ₱1.00   │ ₱1.50   │
+        └───┴───────────┴─────────┴─────────┘
+
+Total = PricePerUnit × Quantity
+
+Example: A4 Color × 100 pages = ₱1.00 × 100 = ₱100.00
+```
+
+### Repair Services
+
+```
+┌────────────────────────────────────────────────┐
+│ Base Hourly Rates                              │
+├────────────────────────────────────────────────┤
+│ Computer Repair:  ₱500/hour                    │
+│ Printer Repair:   ₱400/hour                    │
+│ Minimum Charge:   0.5 hours                    │
+└────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────┐
+│ Complexity Multipliers                         │
+├────────────────────────────────────────────────┤
+│ 1.0x = Normal         (standard repair)        │
+│ 1.5x = Complex        (unusual/difficult)      │
+│ 2.0x = Very Complex   (rare/specialized)       │
+└────────────────────────────────────────────────┘
+
+Formula: BaseRate × Hours × Complexity
+
+Example: Computer Repair, 90 min, 1.5x complex
+= ₱500 × 1.5 hours × 1.5 = ₱1,125.00
+```
+
+## Transaction Flow
+
+```
+1. PRODUCT SALE
+   ┌────────────────────────────────────┐
+   │ User scans barcode                 │
+   └────────────┬──────────────────────┘
+                │
+                ▼
+   ┌────────────────────────────────────┐
+   │ Lookup: Inventory.xlsx first       │
+   │ Fallback: destinypos.db            │
+   └────────────┬──────────────────────┘
+                │
+                ▼
+   ┌────────────────────────────────────┐
+   │ Check: Stock available?            │
+   │ Alert: Low stock warning?          │
+   └────────────┬──────────────────────┘
+                │
+                ▼
+   ┌────────────────────────────────────┐
+   │ Add SaleItem to cart               │
+   │ (in PosViewModel.SaleItems)        │
+   └────────────┬──────────────────────┘
+                │
+                ▼
+   ┌────────────────────────────────────┐
+   │ Update totals (Subtotal, Total)    │
+   └────────────┬──────────────────────┘
+                │
+                ▼
+   ┌────────────────────────────────────┐
+   │ User proceeds to Checkout          │
+   │ (repeat for multiple items)        │
+   └────────────┬──────────────────────┘
+
+2. SERVICE SALE (Printing)
+   ┌────────────────────────────────────┐
+   │ User clicks "Add Printing Service" │
+   └────────────┬──────────────────────┘
+                │
+                ▼
+   ┌────────────────────────────────────┐
+   │ Dialog: Select Size, Type, Qty     │
+   └────────────┬──────────────────────┘
+                │
+                ▼
+   ┌────────────────────────────────────┐
+   │ PricingHelper.CalculatePrintingPrice
+   │ → PrintingOption with TotalPrice   │
+   └────────────┬──────────────────────┘
+                │
+                ▼
+   ┌────────────────────────────────────┐
+   │ Add ServiceItem to cart            │
+   │ posViewModel.AddPrintingService()  │
+   └────────────┬──────────────────────┘
+
+3. SERVICE SALE (Repair)
+   ┌────────────────────────────────────┐
+   │ User clicks "Add Repair Service"   │
+   └────────────┬──────────────────────┘
+                │
+                ▼
+   ┌────────────────────────────────────┐
+   │ Dialog: Select Type, Minutes,      │
+   │ Complexity Factor                  │
+   └────────────┬──────────────────────┘
+                │
+                ▼
+   ┌────────────────────────────────────┐
+   │ PricingHelper.CalculateRepairCost()
+   │ → Labor cost                       │
+   └────────────┬──────────────────────┘
+                │
+                ▼
+   ┌────────────────────────────────────┐
+   │ Add ServiceItem to cart            │
+   │ posViewModel.AddRepairService()    │
+   └────────────┬──────────────────────┘
+
+4. CHECKOUT
+   ┌────────────────────────────────────┐
+   │ User selects Payment Method:       │
+   │ • CASH • GCASH • CARD              │
+   └────────────┬──────────────────────┘
+                │
+                ▼
+   ┌────────────────────────────────────┐
+   │ For each SaleItem:                 │
+   │ • If Product: Deduct from Inventory│
+   │   InventoryHelper.DeductStock()    │
+   │ • Create Transaction object        │
+   └────────────┬──────────────────────┘
+                │
+                ▼
+   ┌────────────────────────────────────┐
+   │ SalesReportHelper.LogTransactions()│
+   │ → Write to SalesReport.xlsx        │
+   └────────────┬──────────────────────┘
+                │
+                ▼
+   ┌────────────────────────────────────┐
+   │ DatabaseHelper.LogSale()           │
+   │ → Write to destinypos.db (legacy)  │
+   └────────────┬──────────────────────┘
+                │
+                ▼
+   ┌────────────────────────────────────┐
+   │ Clear cart, Show Confirmation      │
+   │ "Payment successful! ₱X.XX"        │
+   └────────────────────────────────────┘
+```
+
+## Reporting Dashboard
+
+```
+Dashboard View (Daily Reports)
+│
+├─ Daily Totals
+│  ├─ Total Sales: ₱X,XXX.XX
+│  ├─ Transaction Count: XX
+│  └─ Average Transaction: ₱XXX.XX
+│
+├─ Sales Breakdown
+│  ├─ Product Sales: ₱X,XXX.XX
+│  └─ Service Sales: ₱XXX.XX
+│
+├─ Payment Methods
+│  ├─ CASH: ₱X,XXX.XX (X%)
+│  ├─ GCASH: ₱XXX.XX (X%)
+│  └─ CARD: ₱XXX.XX (X%)
+│
+├─ Service Breakdown
+│  ├─ Printing: ₱XXX.XX
+│  ├─ Computer Repair: ₱XXX.XX
+│  └─ Printer Repair: ₱XXX.XX
+│
+├─ Inventory Alerts
+│  ├─ Low Stock Items: X
+│  └─ Out of Stock: X
+│
+└─ Export Options
+   ├─ Excel Report
+   ├─ PDF Report
+   └─ Email Report
+```
+
+## Class Hierarchy
+
+```
+BaseViewModel
+    │
+    ├─ PosViewModel
+    │   ├─ Uses: InventoryHelper
+    │   ├─ Uses: SalesReportHelper
+    │   ├─ Uses: PricingHelper
+    │   ├─ Uses: DatabaseHelper (legacy)
+    │   └─ Contains: ObservableCollection<SaleItem>
+    │
+    ├─ InventoryViewModel
+    │   ├─ Uses: InventoryHelper
+    │   └─ Contains: ObservableCollection<InventoryItem>
+    │
+    ├─ PrintingServiceViewModel
+    │   ├─ Uses: PricingHelper
+    │   └─ Calls: PosViewModel.AddPrintingService()
+    │
+    ├─ RepairServiceViewModel
+    │   ├─ Uses: PricingHelper
+    │   └─ Calls: PosViewModel.AddRepairService()
+    │
+    └─ SalesReportViewModel
+        ├─ Uses: SalesReportHelper
+        └─ Contains: ObservableCollection<Transaction>
+
+
+Static Helpers:
+    ├─ InventoryHelper
+    │   └─ Manages: Inventory.xlsx
+    │
+    ├─ SalesReportHelper
+    │   └─ Manages: SalesReport.xlsx
+    │
+    ├─ PricingHelper
+    │   └─ In-Memory Pricing Matrix & Calculations
+    │
+    ├─ DatabaseHelper (Legacy)
+    │   └─ Manages: destinypos.db
+    │
+    └─ SampleDataHelper
+        └─ Initializes: Sample Products
+
+
+Models:
+    ├─ SaleItem (POS Local)
+    ├─ InventoryItem (From Inventory.xlsx)
+    ├─ Transaction (SalesReport.xlsx)
+    ├─ PrintingOption (Calculation Result)
+    ├─ Service (Definition)
+    └─ Product (Legacy from DB)
+```
+
+## File I/O Pattern
+
+```
+Read Pattern:
+┌─────────────┐
+│ GetData()   │
+│             │
+├─────────────┤
+│ Open File   │
+├─────────────┤
+│ Parse Excel │
+├─────────────┤
+│ Create List │
+├─────────────┤
+│ Return      │
+└─────────────┘
+
+Write Pattern:
+┌─────────────┐
+│ SaveData()  │
+│             │
+├─────────────┤
+│ Load File   │
+├─────────────┤
+│ Find Row    │
+├─────────────┤
+│ Update Cell │
+├─────────────┤
+│ Save File   │
+└─────────────┘
+
+Note: Each operation reads/writes entire file
+For high-volume, consider in-memory caching
+```
+
+---
+
+This architecture provides:
+✅ Separation of concerns (UI ↔ Business Logic ↔ Data)
+✅ Flexibility (Excel or Database backend)
+✅ Scalability (can migrate to full DB if needed)
+✅ Backward compatibility (legacy DB still works)
+✅ Extensibility (easy to add new services)

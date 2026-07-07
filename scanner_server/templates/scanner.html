@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Phone Barcode Scanner</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; margin: 0; padding: 0; display:flex; flex-direction:column; align-items:center; }
+    #reader { width: 100%; max-width: 600px; margin-top: 8px; }
+    #status { margin: 8px; }
+    button { padding: 10px 16px; margin: 6px; }
+  </style>
+</head>
+<body>
+  <h2>Phone Barcode Scanner</h2>
+  <div id="reader"></div>
+  <div id="status">Initializing...</div>
+  <div>
+    <button id="btnStop">Stop</button>
+    <button id="btnStart">Start</button>
+  </div>
+
+  <!-- Socket.IO client -->
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <!-- html5-qrcode -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.7/minified/html5-qrcode.min.js"></script>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const btnStop = document.getElementById('btnStop');
+    const btnStart = document.getElementById('btnStart');
+
+    // Connect to server (same origin), served by Flask
+    const socket = io();
+
+    socket.on('connect', () => {
+      statusEl.textContent = 'Connected to server';
+    });
+
+    socket.on('disconnect', () => {
+      statusEl.textContent = 'Disconnected from server';
+    });
+
+    // html5-qrcode setup
+    const html5QrCode = new Html5Qrcode("reader");
+    let currentCameraId = null;
+
+    function onScanSuccess(decodedText, decodedResult) {
+      // Send to server via Socket.IO
+      console.log('Scanned:', decodedText);
+      statusEl.textContent = `Scanned: ${decodedText}`;
+      socket.emit('scan', { code: decodedText });
+
+      // brief pause to avoid duplicate reads
+      html5QrCode.pause(/* allow pause */);
+      setTimeout(() => html5QrCode.resume(), 1200);
+    }
+
+    function onScanError(errorMessage) {
+      // console.log('Scan error', errorMessage);
+    }
+
+    function startScanner(cameraId) {
+      const config = { fps: 10, qrbox: { width: 250, height: 100 } };
+      html5QrCode.start(
+        { deviceId: { exact: cameraId } },
+        config,
+        onScanSuccess,
+        onScanError
+      ).then(() => {
+        statusEl.textContent = 'Scanning...';
+      }).catch(err => {
+        statusEl.textContent = 'Camera start failed: ' + err;
+        console.error(err);
+      });
+    }
+
+    function stopScanner() {
+      html5QrCode.stop().then(() => {
+        statusEl.textContent = 'Stopped';
+      }).catch(err => {
+        console.warn('Stop failed', err);
+      });
+    }
+
+    // choose a camera (prefer back camera if available)
+    Html5Qrcode.getCameras().then(cameras => {
+      if (cameras && cameras.length) {
+        // pick a camera that looks like "back" if possible
+        const back = cameras.find(c => /back|rear|environment/i.test(c.label));
+        currentCameraId = (back ? back.id : cameras[0].id);
+        startScanner(currentCameraId);
+      } else {
+        statusEl.textContent = 'No cameras found';
+      }
+    }).catch(err => {
+      statusEl.textContent = 'Camera access error: ' + err;
+      console.error(err);
+    });
+
+    btnStop.addEventListener('click', stopScanner);
+    btnStart.addEventListener('click', () => startScanner(currentCameraId));
+  </script>
+</body>
+</html>

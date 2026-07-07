@@ -2,7 +2,8 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:DestinyPOS2026.Wpf.ViewModels"
-             Height="600" Width="900">
+             xmlns:local="clr-namespace:DestinyPOS2026.Wpf.Views"
+             Height="700" Width="1000">
 
     <UserControl.DataContext>
         <vm:PosViewModel />
@@ -10,53 +11,126 @@
 
     <Grid Margin="10">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="2.5*" />
             <ColumnDefinition Width="1*" />
         </Grid.ColumnDefinitions>
 
         <!-- Left side: Sale Items -->
-        <StackPanel Grid.Column="0">
-            <TextBox Margin="0,0,0,10"
-                     Text="{Binding BarcodeInput, UpdateSourceTrigger=PropertyChanged}"
-                     Width="250"
-                     Height="30"
-                     VerticalAlignment="Top"
-                     ToolTip="Enter or scan barcode" />
+        <StackPanel Grid.Column="0" VerticalAlignment="Stretch">
+            
+            <!-- Search Control -->
+            <TextBlock Text="Search Products" FontWeight="Bold" Margin="0,0,0,5" Foreground="#333" />
+            <local:SearchItemsControl x:Name="SearchControl" 
+                                      Margin="0,0,0,15"
+                                      ItemSelected="SearchItemsControl_ItemSelected" />
 
-            <DataGrid ItemsSource="{Binding SaleItems}" AutoGenerateColumns="False" Height="400">
+            <!-- Service & Discount Section -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                <Button Content="Add Service" 
+                        Width="110" 
+                        Height="35"
+                        Margin="0,0,10,0"
+                        Background="#FF9800"
+                        Foreground="White"
+                        FontWeight="Bold"
+                        Command="{Binding AddServiceCommand}" />
+                
+                <TextBlock Text="Discount: " FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,5,0" />
+                <TextBox Text="{Binding Discount, UpdateSourceTrigger=PropertyChanged}" 
+                         Width="80"
+                         Height="35"
+                         Padding="5"
+                         />
+            </StackPanel>
+
+            <!-- Sale Items DataGrid -->
+            <TextBlock Text="Transaction Items" FontWeight="Bold" Margin="0,0,0,5" Foreground="#333" />
+            <DataGrid ItemsSource="{Binding SaleItems}" 
+                      AutoGenerateColumns="False" 
+                      Height="350"
+                      BorderThickness="1"
+                      BorderBrush="#CCCCCC"
+                      Background="White">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*" />
+                    <DataGridTextColumn Header="Item Name" Binding="{Binding Name}" Width="*" />
+                    <DataGridTextColumn Header="Type" Binding="{Binding ItemType}" Width="80" />
                     <DataGridTextColumn Header="Qty" Binding="{Binding Quantity}" Width="50" />
-                    <DataGridTextColumn Header="Price" Binding="{Binding Price, StringFormat={}{0:N2}}" Width="100" />
-                    <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat={}{0:N2}}" Width="100" />
+                    <DataGridTextColumn Header="Price" Binding="{Binding Price, StringFormat=₱{0:N2}}" Width="90" />
+                    <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat=₱{0:N2}}" Width="90" />
+                    <DataGridTemplateColumn Header="Action" Width="70">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="Remove" 
+                                        Height="25"
+                                        Padding="5"
+                                        Background="#F44336"
+                                        Foreground="White"
+                                        FontSize="11"
+                                        Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        CommandParameter="{Binding .}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                 </DataGrid.Columns>
             </DataGrid>
 
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-                <TextBlock Text="Subtotal: " FontWeight="Bold" />
-                <TextBlock Text="{Binding Subtotal, StringFormat=N2}" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <TextBlock Text="Discount: " FontWeight="Bold" />
-                <TextBlock Text="{Binding Discount, StringFormat=N2}" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <TextBlock Text="Total: " FontWeight="Bold" />
-                <TextBlock Text="{Binding Total, StringFormat=N2}" />
+            <!-- Totals -->
+            <StackPanel Margin="0,15,0,15">
+                <Border BorderThickness="1" BorderBrush="#CCCCCC" Background="#F5F5F5" Padding="10">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,5">
+                            <TextBlock Text="Subtotal: " FontWeight="Bold" Width="100" />
+                            <TextBlock Text="{Binding Subtotal, StringFormat=₱{0:N2}}" Width="100" TextAlignment="Right" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,5">
+                            <TextBlock Text="Discount: " FontWeight="Bold" Width="100" />
+                            <TextBlock Text="{Binding Discount, StringFormat=₱{0:N2}}" Width="100" TextAlignment="Right" />
+                        </StackPanel>
+                        <Separator Margin="0,5,0,5" Background="#CCCCCC" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <TextBlock Text="TOTAL: " FontWeight="Bold" FontSize="14" Width="100" />
+                            <TextBlock Text="{Binding Total, StringFormat=₱{0:N2}}" 
+                                       FontWeight="Bold" 
+                                       FontSize="14"
+                                       Foreground="#2196F3"
+                                       Width="100" 
+                                       TextAlignment="Right" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
             </StackPanel>
 
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0" >
-                <Button Content="Add Item" Width="80" Margin="5" Command="{Binding AddItemCommand}" />
-                <Button Content="Cash" Width="80" Margin="5" Command="{Binding PayCashCommand}" />
-                <Button Content="GCash" Width="80" Margin="5" Command="{Binding PayGcashCommand}" />
-                <Button Content="Card" Width="80" Margin="5" Command="{Binding PayCardCommand}" />
+            <!-- Action Buttons -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+                <Button Content="CASH PAYMENT" 
+                        Width="150" 
+                        Height="45"
+                        Margin="5"
+                        Background="#4CAF50"
+                        Foreground="White"
+                        FontWeight="Bold"
+                        FontSize="13"
+                        Command="{Binding PayCashCommand}" />
+                
+                <Button Content="Clear All" 
+                        Width="120" 
+                        Height="45"
+                        Margin="5"
+                        Background="#9C27B0"
+                        Foreground="White"
+                        FontWeight="Bold"
+                        FontSize="13"
+                        Command="{Binding ClearAllCommand}" />
             </StackPanel>
         </StackPanel>
 
         <!-- Right side: QR Code for phone pairing -->
-        <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Top">
-            <TextBlock Text="Scan QR Code with phone" FontWeight="Bold" Margin="0,0,0,10" />
-            <Image Width="250" Height="250" Source="{Binding QrCodeImage}" />
+        <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="20,0,0,0">
+            <TextBlock Text="Scan QR Code with phone" FontWeight="Bold" Margin="0,0,0,10" TextAlignment="Center" />
+            <Border BorderThickness="2" BorderBrush="#2196F3" CornerRadius="5" Padding="5">
+                <Image Width="200" Height="200" Source="{Binding QrCodeImage}" />
+            </Border>
+            <TextBlock Text="Mobile Scanner" FontStyle="Italic" Foreground="#666666" Margin="0,10,0,0" TextAlignment="Center" />
         </StackPanel>
     </Grid>
 </UserControl>
