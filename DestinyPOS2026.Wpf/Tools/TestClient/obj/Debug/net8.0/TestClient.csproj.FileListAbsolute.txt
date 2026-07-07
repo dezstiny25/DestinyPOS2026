@@ -1,0 +1,15 @@
+C:\Users\PC Users\DestinyPOS2026\DestinyPOS2026.Wpf\Tools\TestClient\bin\Debug\net8.0\TestClient.exe
+C:\Users\PC Users\DestinyPOS2026\DestinyPOS2026.Wpf\Tools\TestClient\bin\Debug\net8.0\TestClient.deps.json
+C:\Users\PC Users\DestinyPOS2026\DestinyPOS2026.Wpf\Tools\TestClient\bin\Debug\net8.0\TestClient.runtimeconfig.json
+C:\Users\PC Users\DestinyPOS2026\DestinyPOS2026.Wpf\Tools\TestClient\bin\Debug\net8.0\TestClient.dll
+C:\Users\PC Users\DestinyPOS2026\DestinyPOS2026.Wpf\Tools\TestClient\bin\Debug\net8.0\TestClient.pdb
+C:\Users\PC Users\DestinyPOS2026\DestinyPOS2026.Wpf\Tools\TestClient\obj\Debug\net8.0\TestClient.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\PC Users\DestinyPOS2026\DestinyPOS2026.Wpf\Tools\TestClient\obj\Debug\net8.0\TestClient.AssemblyInfoInputs.cache
+C:\Users\PC Users\DestinyPOS2026\DestinyPOS2026.Wpf\Tools\TestClient\obj\Debug\net8.0\TestClient.AssemblyInfo.cs
+C:\Users\PC Users\DestinyPOS2026\DestinyPOS2026.Wpf\Tools\TestClient\obj\Debug\net8.0\TestClient.csproj.CoreCompileInputs.cache
+C:\Users\PC Users\DestinyPOS2026\DestinyPOS2026.Wpf\Tools\TestClient\obj\Debug\net8.0\TestClient.sourcelink.json
+C:\Users\PC Users\DestinyPOS2026\DestinyPOS2026.Wpf\Tools\TestClient\obj\Debug\net8.0\TestClient.dll
+C:\Users\PC Users\DestinyPOS2026\DestinyPOS2026.Wpf\Tools\TestClient\obj\Debug\net8.0\refint\TestClient.dll
+C:\Users\PC Users\DestinyPOS2026\DestinyPOS2026.Wpf\Tools\TestClient\obj\Debug\net8.0\TestClient.pdb
+C:\Users\PC Users\DestinyPOS2026\DestinyPOS2026.Wpf\Tools\TestClient\obj\Debug\net8.0\TestClient.genruntimeconfig.cache
+C:\Users\PC Users\DestinyPOS2026\DestinyPOS2026.Wpf\Tools\TestClient\obj\Debug\net8.0\ref\TestClient.dll

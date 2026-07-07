@@ -1,114 +1,62 @@
-<UserControl
-    x:Class="DestinyPOS2026.Wpf.Views.PosView"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:vm="clr-namespace:DestinyPOS2026.Wpf.ViewModels"
-    xmlns:helpers="clr-namespace:DestinyPOS2026.Wpf.Helpers"
-    Background="#F5F5F5">
+<UserControl x:Class="DestinyPOS2026.Wpf.Views.PosView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:DestinyPOS2026.Wpf.ViewModels"
+             Height="600" Width="900">
 
-    <UserControl.Resources>
-        <helpers:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
-    </UserControl.Resources>
+    <UserControl.DataContext>
+        <vm:PosViewModel />
+    </UserControl.DataContext>
 
     <Grid Margin="10">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="250"/> <!-- Sidebar / QR -->
-            <ColumnDefinition Width="*"/>   <!-- Main POS -->
+            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="1*" />
         </Grid.ColumnDefinitions>
 
-        <!-- Sidebar / QR Code -->
-        <StackPanel Grid.Column="0" Margin="10">
-            <Image Source="{Binding QrCodeImage}" Width="200" Height="200" Margin="10"/>
-            <TextBlock Text="Scan this QR code with your phone to pair" FontWeight="Bold" TextWrapping="Wrap" Margin="10,0,0,10"/>
-        </StackPanel>
+        <!-- Left side: Sale Items -->
+        <StackPanel Grid.Column="0">
+            <TextBox Margin="0,0,0,10"
+                     Text="{Binding BarcodeInput, UpdateSourceTrigger=PropertyChanged}"
+                     Width="250"
+                     Height="30"
+                     VerticalAlignment="Top"
+                     ToolTip="Enter or scan barcode" />
 
-        <!-- Main POS -->
-        <Grid Grid.Column="1">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/> <!-- Barcode input -->
-                <RowDefinition Height="*"/>    <!-- Items list -->
-                <RowDefinition Height="Auto"/> <!-- Totals & checkout -->
-            </Grid.RowDefinitions>
-
-            <!-- Barcode Input -->
-            <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,10">
-                <Grid Width="400" Height="40">
-                    <TextBox x:Name="BarcodeTextBox"
-                             Text="{Binding BarcodeInput, UpdateSourceTrigger=PropertyChanged}"
-                             FontSize="16"
-                             VerticalContentAlignment="Center"
-                             Padding="5"/>
-                    <TextBlock Text="Scan or enter barcode"
-                               Foreground="Gray"
-                               Margin="5,0,0,0"
-                               VerticalAlignment="Center"
-                               IsHitTestVisible="False"
-                               Visibility="{Binding Text, ElementName=BarcodeTextBox, Converter={StaticResource StringToVisibilityConverter}}"/>
-                </Grid>
-
-                <Button Content="Add Item"
-                        Width="120"
-                        Height="40"
-                        Margin="10,0,0,0"
-                        Command="{Binding AddItemCommand}"/>
-            </StackPanel>
-
-            <!-- Items List -->
-            <DataGrid Grid.Row="1"
-                      ItemsSource="{Binding SaleItems}"
-                      AutoGenerateColumns="False"
-                      CanUserAddRows="False"
-                      RowHeight="30"
-                      FontSize="14"
-                      Margin="0,0,0,10">
+            <DataGrid ItemsSource="{Binding SaleItems}" AutoGenerateColumns="False" Height="400">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Name" Width="*">
-                        <DataGridTextColumn.Binding>
-                            <Binding Path="Name"/>
-                        </DataGridTextColumn.Binding>
-                    </DataGridTextColumn>
-
-                    <DataGridTextColumn Header="Qty" Width="70">
-                        <DataGridTextColumn.Binding>
-                            <Binding Path="Quantity"/>
-                        </DataGridTextColumn.Binding>
-                    </DataGridTextColumn>
-
-                    <DataGridTextColumn Header="Price" Width="100">
-                        <DataGridTextColumn.Binding>
-                            <Binding Path="Price" StringFormat="₱{0:N2}"/>
-                        </DataGridTextColumn.Binding>
-                    </DataGridTextColumn>
-
-                    <DataGridTextColumn Header="Total" Width="100">
-                        <DataGridTextColumn.Binding>
-                            <Binding Path="Total" StringFormat="₱{0:N2}"/>
-                        </DataGridTextColumn.Binding>
-                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*" />
+                    <DataGridTextColumn Header="Qty" Binding="{Binding Quantity}" Width="50" />
+                    <DataGridTextColumn Header="Price" Binding="{Binding Price, StringFormat={}{0:N2}}" Width="100" />
+                    <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat={}{0:N2}}" Width="100" />
                 </DataGrid.Columns>
             </DataGrid>
 
-            <!-- Totals & Checkout -->
-            <StackPanel Grid.Row="2" Orientation="Vertical" HorizontalAlignment="Right" Margin="0,10,0,0">
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                    <TextBlock Text="Subtotal:" FontWeight="Bold" Width="100"/>
-                    <TextBlock Text="{Binding Subtotal, StringFormat=₱{0:N2}}"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                    <TextBlock Text="Discount:" FontWeight="Bold" Width="100"/>
-                    <TextBlock Text="{Binding Discount, StringFormat=₱{0:N2}}"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                    <TextBlock Text="Total:" FontWeight="Bold" Width="100"/>
-                    <TextBlock Text="{Binding Total, StringFormat=₱{0:N2}}" FontSize="16"/>
-                </StackPanel>
-
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="CASH" Width="100" Height="40" Margin="5" Command="{Binding PayCashCommand}"/>
-                    <Button Content="GCash" Width="100" Height="40" Margin="5" Command="{Binding PayGcashCommand}"/>
-                    <Button Content="CARD" Width="100" Height="40" Margin="5" Command="{Binding PayCardCommand}"/>
-                </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                <TextBlock Text="Subtotal: " FontWeight="Bold" />
+                <TextBlock Text="{Binding Subtotal, StringFormat=N2}" />
             </StackPanel>
-        </Grid>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <TextBlock Text="Discount: " FontWeight="Bold" />
+                <TextBlock Text="{Binding Discount, StringFormat=N2}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <TextBlock Text="Total: " FontWeight="Bold" />
+                <TextBlock Text="{Binding Total, StringFormat=N2}" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0" >
+                <Button Content="Add Item" Width="80" Margin="5" Command="{Binding AddItemCommand}" />
+                <Button Content="Cash" Width="80" Margin="5" Command="{Binding PayCashCommand}" />
+                <Button Content="GCash" Width="80" Margin="5" Command="{Binding PayGcashCommand}" />
+                <Button Content="Card" Width="80" Margin="5" Command="{Binding PayCardCommand}" />
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Right side: QR Code for phone pairing -->
+        <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Top">
+            <TextBlock Text="Scan QR Code with phone" FontWeight="Bold" Margin="0,0,0,10" />
+            <Image Width="250" Height="250" Source="{Binding QrCodeImage}" />
+        </StackPanel>
     </Grid>
 </UserControl>

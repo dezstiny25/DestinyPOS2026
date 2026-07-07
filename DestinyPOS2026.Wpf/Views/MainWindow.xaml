@@ -58,5 +58,12 @@
                 </DataTemplate>
             </ContentControl.Resources>
         </ContentControl>
+        
+        <!-- Status bar -->
+        <StatusBar Grid.ColumnSpan="2" VerticalAlignment="Bottom">
+            <TextBlock Text=""/>
+            <TextBlock Text="Server: " FontWeight="Bold" Margin="8,0,0,0" />
+            <TextBlock Text="{Binding ServerStatus}" />
+        </StatusBar>
     </Grid>
 </Window>

@@ -8,6 +8,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using DestinyPOS2026.Wpf.ViewModels;
 
 namespace DestinyPOS2026.Wpf.Views;
 
