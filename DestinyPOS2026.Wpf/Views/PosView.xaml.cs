@@ -1,3 +1,4 @@
+using System;
 using System.Windows.Controls;
 using DestinyPOS2026.Wpf.Models;
 using DestinyPOS2026.Wpf.ViewModels;
@@ -20,6 +21,14 @@ public partial class PosView : UserControl
         if (DataContext is PosViewModel viewModel)
         {
             viewModel.OnItemSelected(item);
+        }
+    }
+
+    private void SearchItemsControl_SearchRequested(object sender, EventArgs e)
+    {
+        if (DataContext is PosViewModel viewModel)
+        {
+            viewModel.AddItemCommand.Execute(null);
         }
     }
 }

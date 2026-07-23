@@ -9,23 +9,49 @@
     </UserControl.DataContext>
 
     <DockPanel Margin="10">
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0 0 0 10">
-            <Button Content="Add" Width="80" Margin="5" Command="{Binding AddCommand}"/>
-            <Button Content="Save" Width="80" Margin="5" Command="{Binding UpdateCommand}"/>
-            <Button Content="Delete" Width="80" Margin="5" Command="{Binding DeleteCommand}"/>
+        <StackPanel DockPanel.Dock="Top" Margin="0 0 0 10">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="Add" Width="80" Margin="5" Command="{Binding AddCommand}"/>
+                <Button Content="Save" Width="80" Margin="5" Command="{Binding UpdateCommand}"/>
+                <Button Content="Delete" Width="80" Margin="5" Command="{Binding DeleteCommand}"/>
+            </StackPanel>
+
+            <Grid Margin="5,5,5,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="220" />
+                </Grid.ColumnDefinitions>
+
+                <TextBox Grid.Column="0"
+                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,10,0"
+                         Padding="6"
+                         VerticalContentAlignment="Center"
+                         ToolTip="Search by barcode, product name, category, or manufacturer" />
+
+                <ComboBox Grid.Column="1"
+                          SelectedValue="{Binding SortOption, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          Margin="0"
+                          Padding="6">
+                    <ComboBoxItem Content="By Stocks" />
+                    <ComboBoxItem Content="By Manufacturers" />
+                </ComboBox>
+            </Grid>
         </StackPanel>
 
-        <DataGrid
-            ItemsSource="{Binding Products}"
-            SelectedItem="{Binding SelectedProduct}"
-            AutoGenerateColumns="False"
-            CanUserAddRows="False">
-
+        <DataGrid ItemsSource="{Binding InventoryItems}"
+                  SelectedItem="{Binding SelectedInventoryItem}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  IsReadOnly="True">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Barcode" Binding="{Binding Barcode}"/>
-                <DataGridTextColumn Header="Name" Binding="{Binding Name}"/>
-                <DataGridTextColumn Header="Price" Binding="{Binding Price}"/>
-                <DataGridTextColumn Header="Stock" Binding="{Binding Stock}"/>
+                <DataGridTextColumn Header="Barcode" Binding="{Binding Barcode}" Width="110"/>
+                <DataGridTextColumn Header="Product Name" Binding="{Binding ProductName}" Width="2*"/>
+                <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="120"/>
+                <DataGridTextColumn Header="Manufacturer" Binding="{Binding Supplier}" Width="140"/>
+                <DataGridTextColumn Header="Price" Binding="{Binding UnitPrice, StringFormat=₱{0:N2}}" Width="100"/>
+                <DataGridTextColumn Header="Stock" Binding="{Binding CurrentStock}" Width="80"/>
+                <DataGridTextColumn Header="Reorder Level" Binding="{Binding ReorderLevel}" Width="100"/>
             </DataGrid.Columns>
         </DataGrid>
     </DockPanel>

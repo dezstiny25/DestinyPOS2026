@@ -37,11 +37,16 @@ public partial class SearchItemsControl : UserControl
     public static readonly DependencyProperty IsDropdownOpenProperty =
         DependencyProperty.Register("IsDropdownOpen", typeof(bool), typeof(SearchItemsControl), new PropertyMetadata(false));
 
+    public static readonly DependencyProperty SearchTextProperty =
+        DependencyProperty.Register("SearchText", typeof(string), typeof(SearchItemsControl), new PropertyMetadata(string.Empty));
+
     public string SearchText
     {
-        get => SearchTextBox.Text;
-        set => SearchTextBox.Text = value;
+        get => (string)GetValue(SearchTextProperty);
+        set => SetValue(SearchTextProperty, value);
     }
+
+    public event EventHandler? SearchRequested;
 
     public InventoryItem? SelectedItem { get; private set; }
 
@@ -63,9 +68,33 @@ public partial class SearchItemsControl : UserControl
         {
             var items = InventoryHelper.GetAllInventoryItems();
             AllItems.Clear();
-            foreach (var item in items)
+
+            if (items.Count == 0)
             {
-                AllItems.Add(item);
+                AllItems.Add(new InventoryItem
+                {
+                    Barcode = "NO-DATA",
+                    ProductName = "No inventory rows found",
+                    Category = "System",
+                    UnitPrice = 0,
+                    CurrentStock = 0,
+                    ReorderLevel = 0,
+                    ReorderQuantity = 0,
+                    Supplier = string.Empty,
+                    LastRestocked = DateTime.Now
+                });
+            }
+            else
+            {
+                foreach (var item in items)
+                {
+                    AllItems.Add(item);
+                }
+            }
+
+            if (FilteredResults.Count == 0)
+            {
+                FilteredResults.Clear();
             }
         }
         catch (Exception ex)
@@ -154,6 +183,14 @@ public partial class SearchItemsControl : UserControl
                 if (ResultsListBox.SelectedItem is InventoryItem selectedItem)
                 {
                     SelectItem(selectedItem);
+                }
+                else if (FilteredResults.Count > 0)
+                {
+                    SelectItem(FilteredResults[0]);
+                }
+                else
+                {
+                    SearchRequested?.Invoke(this, EventArgs.Empty);
                 }
                 e.Handled = true;
                 break;

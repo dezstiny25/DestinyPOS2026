@@ -14,5 +14,8 @@ public class Transaction
     public decimal UnitPrice { get; set; }
     public decimal TotalPrice { get; set; }
     public string PaymentMethod { get; set; } = string.Empty; // "CASH", "GCASH", "CARD"
+    public decimal CashTendered { get; set; }
+    public decimal ChangeDue { get; set; }
+    public string PaymentStatus { get; set; } = string.Empty;
     public string Notes { get; set; } = string.Empty;
 }

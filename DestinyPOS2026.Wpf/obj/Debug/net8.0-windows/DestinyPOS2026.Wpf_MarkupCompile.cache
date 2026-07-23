@@ -10,11 +10,11 @@ none
 false
 TRACE;DEBUG;NET;NET8_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NETCOREAPP1_0_OR_GREATER;NETCOREAPP1_1_OR_GREATER;NETCOREAPP2_0_OR_GREATER;NETCOREAPP2_1_OR_GREATER;NETCOREAPP2_2_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER;WINDOWS7_0_OR_GREATER
 C:\Users\PC Users\DestinyPOS2026\DestinyPOS2026.Wpf\App.xaml
-7-1413250864
+8-299013574
 
-36353089576
-216-423877760
-Views\AddServiceWindow.xaml;Views\DashboardView.xaml;Views\InventoryView.xaml;Views\MainWindow.xaml;Views\PosView.xaml;Views\ReportsView.xaml;Views\SearchItemsControl.xaml;
+37773319175
+216-12507559
+Views\AddServiceWindow.xaml;Views\DashboardView.xaml;Views\InventoryView.xaml;Views\MainWindow.xaml;Views\PaymentWindow.xaml;Views\PosView.xaml;Views\ReportsView.xaml;Views\SearchItemsControl.xaml;
 
-True
+False
 

@@ -40,10 +40,13 @@ public static class SalesReportHelper
         ws.Cells[1, 5].Value = "Unit Price";
         ws.Cells[1, 6].Value = "Total Price";
         ws.Cells[1, 7].Value = "Payment Method";
-        ws.Cells[1, 8].Value = "Notes";
+        ws.Cells[1, 8].Value = "Cash Tendered";
+        ws.Cells[1, 9].Value = "Change Due";
+        ws.Cells[1, 10].Value = "Payment Status";
+        ws.Cells[1, 11].Value = "Notes";
 
         // Format header row
-        var headerRow = ws.Cells[1, 1, 1, 8];
+        var headerRow = ws.Cells[1, 1, 1, 11];
         headerRow.Style.Font.Bold = true;
         headerRow.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
         headerRow.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightBlue);
@@ -56,7 +59,10 @@ public static class SalesReportHelper
         ws.Column(5).Width = 12;
         ws.Column(6).Width = 12;
         ws.Column(7).Width = 15;
-        ws.Column(8).Width = 20;
+        ws.Column(8).Width = 14;
+        ws.Column(9).Width = 14;
+        ws.Column(10).Width = 16;
+        ws.Column(11).Width = 20;
 
         // Create Summary sheet
         var summaryWs = package.Workbook.Worksheets.Add("Summary");
@@ -88,12 +94,17 @@ public static class SalesReportHelper
             ws.Cells[nextRow, 5].Value = transaction.UnitPrice;
             ws.Cells[nextRow, 6].Value = transaction.TotalPrice;
             ws.Cells[nextRow, 7].Value = transaction.PaymentMethod;
-            ws.Cells[nextRow, 8].Value = transaction.Notes;
+            ws.Cells[nextRow, 8].Value = transaction.CashTendered;
+            ws.Cells[nextRow, 9].Value = transaction.ChangeDue;
+            ws.Cells[nextRow, 10].Value = transaction.PaymentStatus;
+            ws.Cells[nextRow, 11].Value = transaction.Notes;
 
             // Format cells
             ws.Cells[nextRow, 1].Style.Numberformat.Format = "mm/dd/yyyy hh:mm:ss";
             ws.Cells[nextRow, 5].Style.Numberformat.Format = "₱#,##0.00";
             ws.Cells[nextRow, 6].Style.Numberformat.Format = "₱#,##0.00";
+            ws.Cells[nextRow, 8].Style.Numberformat.Format = "₱#,##0.00";
+            ws.Cells[nextRow, 9].Style.Numberformat.Format = "₱#,##0.00";
 
             package.SaveAs(new FileInfo(SalesReportPath));
         });
@@ -125,12 +136,17 @@ public static class SalesReportHelper
                 ws.Cells[row, 5].Value = transaction.UnitPrice;
                 ws.Cells[row, 6].Value = transaction.TotalPrice;
                 ws.Cells[row, 7].Value = transaction.PaymentMethod;
-                ws.Cells[row, 8].Value = transaction.Notes;
+                ws.Cells[row, 8].Value = transaction.CashTendered;
+                ws.Cells[row, 9].Value = transaction.ChangeDue;
+                ws.Cells[row, 10].Value = transaction.PaymentStatus;
+                ws.Cells[row, 11].Value = transaction.Notes;
 
                 // Format cells
                 ws.Cells[row, 1].Style.Numberformat.Format = "mm/dd/yyyy hh:mm:ss";
                 ws.Cells[row, 5].Style.Numberformat.Format = "₱#,##0.00";
                 ws.Cells[row, 6].Style.Numberformat.Format = "₱#,##0.00";
+                ws.Cells[row, 8].Style.Numberformat.Format = "₱#,##0.00";
+                ws.Cells[row, 9].Style.Numberformat.Format = "₱#,##0.00";
             }
 
             package.SaveAs(new FileInfo(SalesReportPath));
@@ -162,7 +178,10 @@ public static class SalesReportHelper
                 UnitPrice = Convert.ToDecimal(ws.Cells[row, 5].Value ?? 0),
                 TotalPrice = Convert.ToDecimal(ws.Cells[row, 6].Value ?? 0),
                 PaymentMethod = ws.Cells[row, 7].Value?.ToString() ?? string.Empty,
-                Notes = ws.Cells[row, 8].Value?.ToString() ?? string.Empty
+                CashTendered = Convert.ToDecimal(ws.Cells[row, 8].Value ?? 0),
+                ChangeDue = Convert.ToDecimal(ws.Cells[row, 9].Value ?? 0),
+                PaymentStatus = ws.Cells[row, 10].Value?.ToString() ?? string.Empty,
+                Notes = ws.Cells[row, 11].Value?.ToString() ?? string.Empty
             });
         }
 
@@ -264,9 +283,12 @@ public static class SalesReportHelper
         ws.Cells[1, 5].Value = "Unit Price";
         ws.Cells[1, 6].Value = "Total Price";
         ws.Cells[1, 7].Value = "Payment Method";
-        ws.Cells[1, 8].Value = "Notes";
+        ws.Cells[1, 8].Value = "Cash Tendered";
+        ws.Cells[1, 9].Value = "Change Due";
+        ws.Cells[1, 10].Value = "Payment Status";
+        ws.Cells[1, 11].Value = "Notes";
 
-        var headerRow = ws.Cells[1, 1, 1, 8];
+        var headerRow = ws.Cells[1, 1, 1, 11];
         headerRow.Style.Font.Bold = true;
         headerRow.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
         headerRow.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightBlue);
@@ -278,7 +300,10 @@ public static class SalesReportHelper
         ws.Column(5).Width = 12;
         ws.Column(6).Width = 12;
         ws.Column(7).Width = 15;
-        ws.Column(8).Width = 20;
+        ws.Column(8).Width = 14;
+        ws.Column(9).Width = 14;
+        ws.Column(10).Width = 16;
+        ws.Column(11).Width = 20;
 
         // Create Summary sheet
         var summaryWs = package.Workbook.Worksheets.Add("Summary");
@@ -312,9 +337,12 @@ public static class SalesReportHelper
             worksheet.Cells[1, 5].Value = "Unit Price";
             worksheet.Cells[1, 6].Value = "Total Price";
             worksheet.Cells[1, 7].Value = "Payment Method";
-            worksheet.Cells[1, 8].Value = "Notes";
+            worksheet.Cells[1, 8].Value = "Cash Tendered";
+            worksheet.Cells[1, 9].Value = "Change Due";
+            worksheet.Cells[1, 10].Value = "Payment Status";
+            worksheet.Cells[1, 11].Value = "Notes";
 
-            var headerRow = worksheet.Cells[1, 1, 1, 8];
+            var headerRow = worksheet.Cells[1, 1, 1, 11];
             headerRow.Style.Font.Bold = true;
             headerRow.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
             headerRow.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGreen);
@@ -326,7 +354,10 @@ public static class SalesReportHelper
             worksheet.Column(5).Width = 12;
             worksheet.Column(6).Width = 12;
             worksheet.Column(7).Width = 15;
-            worksheet.Column(8).Width = 20;
+            worksheet.Column(8).Width = 14;
+            worksheet.Column(9).Width = 14;
+            worksheet.Column(10).Width = 16;
+            worksheet.Column(11).Width = 20;
         }
 
         return worksheet;
@@ -357,12 +388,17 @@ public static class SalesReportHelper
             ws.Cells[nextRow, 5].Value = transaction.UnitPrice;
             ws.Cells[nextRow, 6].Value = transaction.TotalPrice;
             ws.Cells[nextRow, 7].Value = transaction.PaymentMethod;
-            ws.Cells[nextRow, 8].Value = transaction.Notes;
+            ws.Cells[nextRow, 8].Value = transaction.CashTendered;
+            ws.Cells[nextRow, 9].Value = transaction.ChangeDue;
+            ws.Cells[nextRow, 10].Value = transaction.PaymentStatus;
+            ws.Cells[nextRow, 11].Value = transaction.Notes;
 
             // Format cells
             ws.Cells[nextRow, 1].Style.Numberformat.Format = "mm/dd/yyyy hh:mm:ss";
             ws.Cells[nextRow, 5].Style.Numberformat.Format = "₱#,##0.00";
             ws.Cells[nextRow, 6].Style.Numberformat.Format = "₱#,##0.00";
+            ws.Cells[nextRow, 8].Style.Numberformat.Format = "₱#,##0.00";
+            ws.Cells[nextRow, 9].Style.Numberformat.Format = "₱#,##0.00";
 
             package.SaveAs(new FileInfo(monthlyPath));
         });
@@ -406,12 +442,17 @@ public static class SalesReportHelper
                     ws.Cells[row, 5].Value = transaction.UnitPrice;
                     ws.Cells[row, 6].Value = transaction.TotalPrice;
                     ws.Cells[row, 7].Value = transaction.PaymentMethod;
-                    ws.Cells[row, 8].Value = transaction.Notes;
+                    ws.Cells[row, 8].Value = transaction.CashTendered;
+                    ws.Cells[row, 9].Value = transaction.ChangeDue;
+                    ws.Cells[row, 10].Value = transaction.PaymentStatus;
+                    ws.Cells[row, 11].Value = transaction.Notes;
 
                     // Format cells
                     ws.Cells[row, 1].Style.Numberformat.Format = "mm/dd/yyyy hh:mm:ss";
                     ws.Cells[row, 5].Style.Numberformat.Format = "₱#,##0.00";
                     ws.Cells[row, 6].Style.Numberformat.Format = "₱#,##0.00";
+                    ws.Cells[row, 8].Style.Numberformat.Format = "₱#,##0.00";
+                    ws.Cells[row, 9].Style.Numberformat.Format = "₱#,##0.00";
                 }
 
                 package.SaveAs(new FileInfo(monthlyPath));

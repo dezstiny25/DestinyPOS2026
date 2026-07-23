@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "T45vrCdiduE=",
+  "dgSpecHash": "eYSjNernckY=",
   "success": true,
   "projectFilePath": "C:\\Users\\PC Users\\DestinyPOS2026\\DestinyPOS2026.Wpf\\DestinyPOS2026.Wpf.csproj",
   "expectedPackageFiles": [
@@ -32,10 +32,10 @@
     "C:\\Users\\PC Users\\.nuget\\packages\\system.text.encoding.codepages\\8.0.0\\system.text.encoding.codepages.8.0.0.nupkg.sha512",
     "C:\\Users\\PC Users\\.nuget\\packages\\system.text.encodings.web\\8.0.0\\system.text.encodings.web.8.0.0.nupkg.sha512",
     "C:\\Users\\PC Users\\.nuget\\packages\\system.text.json\\8.0.0\\system.text.json.8.0.0.nupkg.sha512",
-    "C:\\Users\\PC Users\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.28\\microsoft.aspnetcore.app.ref.8.0.28.nupkg.sha512",
-    "C:\\Users\\PC Users\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\8.0.28\\microsoft.netcore.app.host.win-x64.8.0.28.nupkg.sha512",
-    "C:\\Users\\PC Users\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.28\\microsoft.netcore.app.ref.8.0.28.nupkg.sha512",
-    "C:\\Users\\PC Users\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.28\\microsoft.windowsdesktop.app.ref.8.0.28.nupkg.sha512"
+    "C:\\Users\\PC Users\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.29\\microsoft.netcore.app.ref.8.0.29.nupkg.sha512",
+    "C:\\Users\\PC Users\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.29\\microsoft.windowsdesktop.app.ref.8.0.29.nupkg.sha512",
+    "C:\\Users\\PC Users\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.29\\microsoft.aspnetcore.app.ref.8.0.29.nupkg.sha512",
+    "C:\\Users\\PC Users\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\8.0.29\\microsoft.netcore.app.host.win-x64.8.0.29.nupkg.sha512"
   ],
   "logs": []
 }

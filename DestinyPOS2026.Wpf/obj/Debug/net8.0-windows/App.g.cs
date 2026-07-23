@@ -44,7 +44,7 @@ namespace DestinyPOS2026.Wpf {
         /// InitializeComponent
         /// </summary>
         [System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [System.CodeDom.Compiler.GeneratedCodeAttribute("PresentationBuildTasks", "10.0.9.0")]
+        [System.CodeDom.Compiler.GeneratedCodeAttribute("PresentationBuildTasks", "10.0.10.0")]
         public void InitializeComponent() {
             
             #line 5 "..\..\..\App.xaml"
@@ -59,7 +59,7 @@ namespace DestinyPOS2026.Wpf {
         /// </summary>
         [System.STAThreadAttribute()]
         [System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [System.CodeDom.Compiler.GeneratedCodeAttribute("PresentationBuildTasks", "10.0.9.0")]
+        [System.CodeDom.Compiler.GeneratedCodeAttribute("PresentationBuildTasks", "10.0.10.0")]
         public static void Main() {
             DestinyPOS2026.Wpf.App app = new DestinyPOS2026.Wpf.App();
             app.InitializeComponent();

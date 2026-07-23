@@ -13,12 +13,25 @@ namespace DestinyPOS2026.Wpf.ViewModels;
 /// <summary>
 /// Enhanced sale item that supports both products and services
 /// </summary>
-public class SaleItem
+public class SaleItem : BaseViewModel
 {
     public string Barcode { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string ItemType { get; set; } = "Product"; // "Product" or "Service"
-    public int Quantity { get; set; }
+
+    private int _quantity;
+    public int Quantity
+    {
+        get => _quantity;
+        set
+        {
+            if (_quantity == value) return;
+            _quantity = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(Total));
+        }
+    }
+
     public decimal Price { get; set; }
     public decimal Total => Price * Quantity;
     public string Notes { get; set; } = string.Empty; // For service details
@@ -37,19 +50,40 @@ public class PosViewModel : BaseViewModel
 
     public decimal Subtotal => SaleItems.Sum(x => x.Total);
 
-    private decimal _discount;
-    public decimal Discount
+    public decimal Total => Subtotal;
+
+    private decimal _cashTendered;
+    public decimal CashTendered
     {
-        get => _discount;
-        set { _discount = value; OnPropertyChanged(); OnPropertyChanged(nameof(Total)); }
+        get => _cashTendered;
+        set { _cashTendered = value; OnPropertyChanged(); }
     }
 
-    public decimal Total => Subtotal - Discount;
+    private decimal _changeDue;
+    public decimal ChangeDue
+    {
+        get => _changeDue;
+        set { _changeDue = value; OnPropertyChanged(); }
+    }
+
+    private string _paymentMethod = "CASH";
+    public string CurrentPaymentMethod
+    {
+        get => _paymentMethod;
+        set { _paymentMethod = value; OnPropertyChanged(); }
+    }
+
+    private string _paymentStatus = "Not Paid";
+    public string PaymentStatus
+    {
+        get => _paymentStatus;
+        set { _paymentStatus = value; OnPropertyChanged(); }
+    }
 
     // Commands
     public RelayCommand AddItemCommand { get; }
     public RelayCommand AddServiceCommand { get; }
-    public RelayCommand PayCashCommand { get; }
+    public RelayCommand ConfirmSaleCommand { get; }
     public RelayCommand RemoveItemCommand { get; }
     public RelayCommand ClearAllCommand { get; }
 
@@ -61,7 +95,7 @@ public class PosViewModel : BaseViewModel
     {
         AddItemCommand = new RelayCommand(_ => AddItem());
         AddServiceCommand = new RelayCommand(_ => AddService());
-        PayCashCommand = new RelayCommand(_ => CompleteSale("CASH"));
+        ConfirmSaleCommand = new RelayCommand(_ => OpenPaymentDialog());
         RemoveItemCommand = new RelayCommand(obj => RemoveItem(obj));
         ClearAllCommand = new RelayCommand(_ => ClearAll());
 
@@ -81,10 +115,15 @@ public class PosViewModel : BaseViewModel
     {
         if (string.IsNullOrWhiteSpace(BarcodeInput)) return;
 
-        var barcode = BarcodeInput.Trim();
+        var searchValue = BarcodeInput.Trim();
 
-        // Try to find as inventory item first
-        var inventoryItem = InventoryHelper.GetInventoryItemByBarcode(barcode);
+        // Try to find by barcode or exact / partial product name in inventory first
+        var inventoryItem = InventoryHelper.GetAllInventoryItems()
+            .FirstOrDefault(x =>
+                x.Barcode.Equals(searchValue, StringComparison.OrdinalIgnoreCase) ||
+                x.ProductName.Equals(searchValue, StringComparison.OrdinalIgnoreCase) ||
+                x.ProductName.Contains(searchValue, StringComparison.OrdinalIgnoreCase));
+
         if (inventoryItem != null)
         {
             AddInventoryItem(inventoryItem);
@@ -92,14 +131,17 @@ public class PosViewModel : BaseViewModel
         }
 
         // Fallback to database for backward compatibility
-        var product = DatabaseHelper.GetProductByBarcode(barcode);
+        var product = DatabaseHelper.GetProductByBarcode(searchValue)
+            ?? DatabaseHelper.GetProductByName(searchValue)
+            ?? DatabaseHelper.GetProducts().FirstOrDefault(x => x.Name.Contains(searchValue, StringComparison.OrdinalIgnoreCase));
+
         if (product != null)
         {
             AddProductFromDatabase(product);
             return;
         }
 
-        MessageBox.Show($"Product with barcode {barcode} not found.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+        MessageBox.Show($"Product {searchValue} not found.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
     }
 
     /// <summary>
@@ -263,7 +305,7 @@ public class PosViewModel : BaseViewModel
     /// <summary>
     /// Removes a single item from the sale
     /// </summary>
-    private void RemoveItem(object obj)
+    private void RemoveItem(object? obj)
     {
         if (obj is SaleItem item)
         {
@@ -286,23 +328,47 @@ public class PosViewModel : BaseViewModel
         if (result == MessageBoxResult.Yes)
         {
             SaleItems.Clear();
-            Discount = 0;
             RefreshTotals();
         }
     }
 
-    /// <summary>
-    /// Completes the sale and logs all transactions
-    /// Uses Cash payment method (simplified as per requirements)
-    /// Logs transactions to monthly files with daily sheet organization
-    /// </summary>
-    private void CompleteSale(string method)
+    private void OpenPaymentDialog()
     {
         if (!SaleItems.Any())
         {
             MessageBox.Show("No items to checkout.", "POS", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
+
+        var paymentWindow = new PaymentWindow(Total);
+        if (paymentWindow.ShowDialog() == true)
+        {
+            CompleteSale(paymentWindow.PaymentMethod, paymentWindow.CashTendered, paymentWindow.ChangeDue, paymentWindow.PaymentStatus);
+        }
+    }
+
+    /// <summary>
+    /// Completes the sale and logs all transactions
+    /// Supports payment details and writes complete payment info to sales report and database
+    /// </summary>
+    private void CompleteSale(string method, decimal cashTendered, decimal changeDue, string paymentStatus)
+    {
+        if (!SaleItems.Any())
+        {
+            MessageBox.Show("No items to checkout.", "POS", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        if (!string.Equals(paymentStatus, "Paid", StringComparison.OrdinalIgnoreCase))
+        {
+            MessageBox.Show("Payment did not complete successfully.", "Payment Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        CurrentPaymentMethod = method;
+        CashTendered = cashTendered;
+        ChangeDue = changeDue;
+        PaymentStatus = paymentStatus;
 
         var transactions = new System.Collections.Generic.List<Transaction>();
 
@@ -333,6 +399,9 @@ public class PosViewModel : BaseViewModel
                 UnitPrice = item.Price,
                 TotalPrice = item.Total,
                 PaymentMethod = method,
+                CashTendered = cashTendered,
+                ChangeDue = changeDue,
+                PaymentStatus = paymentStatus,
                 Notes = item.Notes
             });
         }
@@ -349,6 +418,9 @@ public class PosViewModel : BaseViewModel
             Date = DateTime.Now,
             PaymentMethod = method,
             Total = Total,
+            CashTendered = cashTendered,
+            ChangeDue = changeDue,
+            PaymentStatus = paymentStatus,
             Items = SaleItems.Select(x => new DestinyPOS2026.Wpf.Models.SaleItem
             {
                 Name = x.Name,
@@ -358,10 +430,9 @@ public class PosViewModel : BaseViewModel
         };
         DatabaseHelper.LogSale(sale);
 
-        MessageBox.Show($"Payment successful!\nMethod: {method}\nTotal: ₱{Total:N2}", "Sale Completed", MessageBoxButton.OK, MessageBoxImage.Information);
+        MessageBox.Show($"Payment successful!\nMethod: {method}\nTotal: ₱{Total:N2}\nTendered: ₱{cashTendered:N2}\nChange: ₱{changeDue:N2}", "Sale Completed", MessageBoxButton.OK, MessageBoxImage.Information);
 
         SaleItems.Clear();
-        Discount = 0;
         RefreshTotals();
     }
 

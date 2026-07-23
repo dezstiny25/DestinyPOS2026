@@ -1,10 +1,16 @@
+using System;
+using System.Collections.Generic;
+
 namespace DestinyPOS2026.Wpf.Models;
 
-public class SaleItem
+public class SaleRecord
 {
-    public string Barcode { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public int Quantity { get; set; }
-    public decimal Price { get; set; }
-    public decimal Total => Price * Quantity;
+    public int Id { get; set; }
+    public DateTime Date { get; set; }
+    public string PaymentMethod { get; set; } = string.Empty;
+    public decimal Total { get; set; }
+    public decimal CashTendered { get; set; }
+    public decimal ChangeDue { get; set; }
+    public string PaymentStatus { get; set; } = string.Empty;
+    public List<SaleItem> Items { get; set; } = new();
 }

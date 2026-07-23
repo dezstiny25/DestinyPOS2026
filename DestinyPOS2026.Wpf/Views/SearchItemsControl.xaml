@@ -13,6 +13,7 @@
                      Background="White"
                      BorderThickness="1"
                      BorderBrush="#CCCCCC"
+                     Text="{Binding SearchText, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      TextChanged="SearchTextBox_TextChanged"
                      KeyDown="SearchTextBox_KeyDown"
                      ToolTip="Type to search by barcode or product name" />

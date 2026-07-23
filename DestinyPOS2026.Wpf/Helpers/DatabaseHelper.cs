@@ -32,10 +32,49 @@ public static class DatabaseHelper
             Date TEXT NOT NULL,
             PaymentMethod TEXT NOT NULL,
             Total REAL NOT NULL,
+            CashTendered REAL NOT NULL DEFAULT 0,
+            ChangeDue REAL NOT NULL DEFAULT 0,
+            PaymentStatus TEXT NOT NULL DEFAULT 'Pending',
             Items TEXT NOT NULL
         );
         ";
         cmd.ExecuteNonQuery();
+
+        EnsureSalesColumns(conn);
+    }
+
+    private static void EnsureSalesColumns(SqliteConnection conn)
+    {
+        var existingColumns = new System.Collections.Generic.HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        using var pragmaCmd = conn.CreateCommand();
+        pragmaCmd.CommandText = "PRAGMA table_info(Sales);";
+        using var reader = pragmaCmd.ExecuteReader();
+        while (reader.Read())
+        {
+            existingColumns.Add(reader.GetString(1));
+        }
+
+        if (!existingColumns.Contains("CashTendered"))
+        {
+            using var addCmd = conn.CreateCommand();
+            addCmd.CommandText = "ALTER TABLE Sales ADD COLUMN CashTendered REAL NOT NULL DEFAULT 0;";
+            addCmd.ExecuteNonQuery();
+        }
+
+        if (!existingColumns.Contains("ChangeDue"))
+        {
+            using var addCmd = conn.CreateCommand();
+            addCmd.CommandText = "ALTER TABLE Sales ADD COLUMN ChangeDue REAL NOT NULL DEFAULT 0;";
+            addCmd.ExecuteNonQuery();
+        }
+
+        if (!existingColumns.Contains("PaymentStatus"))
+        {
+            using var addCmd = conn.CreateCommand();
+            addCmd.CommandText = "ALTER TABLE Sales ADD COLUMN PaymentStatus TEXT NOT NULL DEFAULT 'Pending';";
+            addCmd.ExecuteNonQuery();
+        }
     }
 
     // ===== Products =====
@@ -72,6 +111,31 @@ public static class DatabaseHelper
         var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT * FROM Products WHERE Barcode=$barcode LIMIT 1";
         cmd.Parameters.AddWithValue("$barcode", barcode);
+
+        using var reader = cmd.ExecuteReader();
+        if (reader.Read())
+        {
+            return new Product
+            {
+                Id = reader.GetInt32(0),
+                Barcode = reader.GetString(1),
+                Name = reader.GetString(2),
+                Price = reader.GetDecimal(3),
+                Stock = reader.GetInt32(4)
+            };
+        }
+
+        return null;
+    }
+
+    public static Product? GetProductByName(string name)
+    {
+        using var conn = new SqliteConnection($"Data Source={DbPath}");
+        conn.Open();
+
+        var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT * FROM Products WHERE Name=$name LIMIT 1";
+        cmd.Parameters.AddWithValue("$name", name);
 
         using var reader = cmd.ExecuteReader();
         if (reader.Read())
@@ -162,14 +226,19 @@ public static class DatabaseHelper
         using var conn = new SqliteConnection($"Data Source={DbPath}");
         conn.Open();
 
+        EnsureSalesColumns(conn);
+
         var cmd = conn.CreateCommand();
         cmd.CommandText = @"
-        INSERT INTO Sales (Date, PaymentMethod, Total, Items)
-        VALUES ($date, $method, $total, $items)
+        INSERT INTO Sales (Date, PaymentMethod, Total, CashTendered, ChangeDue, PaymentStatus, Items)
+        VALUES ($date, $method, $total, $cashTendered, $changeDue, $status, $items)
         ";
         cmd.Parameters.AddWithValue("$date", sale.Date.ToString("yyyy-MM-dd HH:mm:ss"));
         cmd.Parameters.AddWithValue("$method", sale.PaymentMethod);
         cmd.Parameters.AddWithValue("$total", sale.Total);
+        cmd.Parameters.AddWithValue("$cashTendered", sale.CashTendered);
+        cmd.Parameters.AddWithValue("$changeDue", sale.ChangeDue);
+        cmd.Parameters.AddWithValue("$status", sale.PaymentStatus);
 
         // Serialize Items to JSON
         var itemsJson = System.Text.Json.JsonSerializer.Serialize(sale.Items);
@@ -186,12 +255,12 @@ public static class DatabaseHelper
         conn.Open();
 
         var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT Id, Date, PaymentMethod, Total, Items FROM Sales ORDER BY Date DESC";
+        cmd.CommandText = "SELECT Id, Date, PaymentMethod, Total, CashTendered, ChangeDue, PaymentStatus, Items FROM Sales ORDER BY Date DESC";
 
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
         {
-            var itemsJson = reader.GetString(4);
+            var itemsJson = reader.GetString(7);
             var items = System.Text.Json.JsonSerializer.Deserialize<List<SaleItem>>(itemsJson) ?? new();
 
             sales.Add(new SaleRecord
@@ -200,6 +269,9 @@ public static class DatabaseHelper
                 Date = DateTime.Parse(reader.GetString(1)),
                 PaymentMethod = reader.GetString(2),
                 Total = reader.GetDecimal(3),
+                CashTendered = reader.GetDecimal(4),
+                ChangeDue = reader.GetDecimal(5),
+                PaymentStatus = reader.GetString(6),
                 Items = items
             });
         }

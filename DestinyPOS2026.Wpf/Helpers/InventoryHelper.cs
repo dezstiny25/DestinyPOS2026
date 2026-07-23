@@ -8,13 +8,46 @@ using OfficeOpenXml;
 namespace DestinyPOS2026.Wpf.Helpers;
 
 /// <summary>
-/// Manages inventory data in Inventory.xlsx file
+/// Manages inventory data in CLM Inventory.xlsx file
 /// Handles reading, writing, stock updates, and low stock alerts
 /// </summary>
 public static class InventoryHelper
 {
-    private static readonly string InventoryPath = 
-        Path.Combine(AppContext.BaseDirectory, "Inventory.xlsx");
+    private static string InventoryPath
+    {
+        get
+        {
+            var candidatePaths = new List<string>();
+            var currentDir = Directory.GetCurrentDirectory();
+
+            void AddDirectoryCandidates(string? directory)
+            {
+                if (string.IsNullOrWhiteSpace(directory)) return;
+
+                candidatePaths.Add(Path.Combine(directory, "CLM Inventory.xlsx"));
+
+                var parentDir = new DirectoryInfo(directory);
+                while (parentDir?.Parent != null)
+                {
+                    parentDir = parentDir.Parent;
+                    candidatePaths.Add(Path.Combine(parentDir.FullName, "CLM Inventory.xlsx"));
+                }
+            }
+
+            AddDirectoryCandidates(currentDir);
+            AddDirectoryCandidates(AppContext.BaseDirectory);
+
+            foreach (var candidatePath in candidatePaths.Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                if (File.Exists(candidatePath))
+                {
+                    return candidatePath;
+                }
+            }
+
+            return Path.Combine(currentDir, "CLM Inventory.xlsx");
+        }
+    }
 
     static InventoryHelper()
     {
@@ -63,8 +96,14 @@ public static class InventoryHelper
         package.SaveAs(new FileInfo(InventoryPath));
     }
 
+    private static ExcelWorksheet? GetInventoryWorksheet(ExcelPackage package)
+    {
+        return package.Workbook.Worksheets["Inventory"]
+            ?? package.Workbook.Worksheets.FirstOrDefault();
+    }
+
     /// <summary>
-    /// Gets all inventory items from the Inventory.xlsx file (thread-safe)
+    /// Gets all inventory items from the CLM Inventory.xlsx file (thread-safe)
     /// </summary>
     public static List<InventoryItem> GetAllInventoryItems()
     {
@@ -74,7 +113,8 @@ public static class InventoryHelper
             var items = new List<InventoryItem>();
 
             using var package = new ExcelPackage(new FileInfo(InventoryPath));
-            var ws = package.Workbook.Worksheets["Inventory"];
+            var ws = GetInventoryWorksheet(package);
+            if (ws == null) return items;
 
             for (int row = 2; row <= ws.Dimension?.Rows; row++)
             {
@@ -118,7 +158,8 @@ public static class InventoryHelper
             InitializeInventoryFile();
 
             using var package = new ExcelPackage(new FileInfo(InventoryPath));
-            var ws = package.Workbook.Worksheets["Inventory"];
+            var ws = GetInventoryWorksheet(package);
+            if (ws == null) return false;
 
             for (int row = 2; row <= ws.Dimension?.Rows; row++)
             {
@@ -167,7 +208,11 @@ public static class InventoryHelper
             InitializeInventoryFile();
 
             using var package = new ExcelPackage(new FileInfo(InventoryPath));
-            var ws = package.Workbook.Worksheets["Inventory"];
+            var ws = GetInventoryWorksheet(package);
+            if (ws == null)
+            {
+                ws = package.Workbook.Worksheets.Add("Inventory");
+            }
 
             var nextRow = (ws.Dimension?.Rows ?? 1) + 1;
 
@@ -197,7 +242,8 @@ public static class InventoryHelper
         InitializeInventoryFile();
 
         using var package = new ExcelPackage(new FileInfo(InventoryPath));
-        var ws = package.Workbook.Worksheets["Inventory"];
+        var ws = GetInventoryWorksheet(package);
+        if (ws == null) return;
 
         for (int row = 2; row <= ws.Dimension?.Rows; row++)
         {
@@ -239,7 +285,8 @@ public static class InventoryHelper
             InitializeInventoryFile();
 
             using var package = new ExcelPackage(new FileInfo(InventoryPath));
-            var ws = package.Workbook.Worksheets["Inventory"];
+            var ws = GetInventoryWorksheet(package);
+            if (ws == null) return (false, "Inventory worksheet not found.", item.Barcode);
 
             // Check if item already exists
             for (int row = 2; row <= ws.Dimension?.Rows; row++)
