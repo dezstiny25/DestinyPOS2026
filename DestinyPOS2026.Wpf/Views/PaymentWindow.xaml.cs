@@ -41,15 +41,27 @@ public partial class PaymentWindow : Window, INotifyPropertyChanged
     }
 
     public string PaymentMethod
+{
+    get => _paymentMethod;
+    set
     {
-        get => _paymentMethod;
-        set
+        if (_paymentMethod == value)
+            return;
+
+        _paymentMethod = value;
+
+        if (_paymentMethod.Equals("GCASH", StringComparison.OrdinalIgnoreCase))
         {
-            _paymentMethod = value;
-            RecalculatePayment();
-            OnPropertyChanged(nameof(PaymentMethod));
+            // Automatically tender the exact amount
+            CashTendered = AmountDue;
         }
+
+        RecalculatePayment();
+
+        OnPropertyChanged(nameof(PaymentMethod));
+        OnPropertyChanged(nameof(IsCashTenderedReadOnly));
     }
+}
 
     public string PaymentStatus
     {
@@ -69,6 +81,8 @@ public partial class PaymentWindow : Window, INotifyPropertyChanged
         set { _gcashQrImage = value; OnPropertyChanged(nameof(GcashQrImage)); }
     }
 
+public bool IsCashTenderedReadOnly =>
+    PaymentMethod.Equals("GCASH", StringComparison.OrdinalIgnoreCase);
     public PaymentWindow(decimal amountDue)
     {
         InitializeComponent();

@@ -6,7 +6,7 @@
     xmlns:views="clr-namespace:DestinyPOS2026.Wpf.Views"
     Title="DestinyPOS 2026"
     Height="700"
-    Width="1100"
+    Width="1200"
     WindowStartupLocation="CenterScreen">
 
     <Window.DataContext>

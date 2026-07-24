@@ -351,6 +351,8 @@ public class PosViewModel : BaseViewModel
     /// Completes the sale and logs all transactions
     /// Supports payment details and writes complete payment info to sales report and database
     /// </summary>
+    /// 
+    
     private void CompleteSale(string method, decimal cashTendered, decimal changeDue, string paymentStatus)
     {
         if (!SaleItems.Any())
@@ -369,6 +371,7 @@ public class PosViewModel : BaseViewModel
         CashTendered = cashTendered;
         ChangeDue = changeDue;
         PaymentStatus = paymentStatus;
+        
 
         var transactions = new System.Collections.Generic.List<Transaction>();
 
@@ -451,3 +454,4 @@ public class PosViewModel : BaseViewModel
         });
     }
 }
+
